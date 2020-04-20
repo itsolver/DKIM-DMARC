@@ -1,3 +1,11 @@
+# Accounts with MFA enabled: Replace <UPN> with your account in user principal name format (for example, navin@contoso.com) and run the following command:
+#$UPN = Read-Host -Prompt  'Input your O365 admin account username'
+#Connect-ExchangeOnline -UserPrincipalName $UPN -ShowProgress $true
+
+# Accounts without MFA enabled:
+ $UserCredential = Get-Credential
+ Connect-ExchangeOnline -Credential $UserCredential -ShowProgress $true
+
 #Revision: 0.1
 
 Write-Host "Getting list of all custom domains" -ForegroundColor Yellow
@@ -13,10 +21,18 @@ if (!($dkimconfig)) {
     }          
 }
 
-#Get DKIM info from the teant
+#Get DKIM info from the tenant
 Write-Host "Collecting Selector1 and Selector2 CNAME records from all domains" -ForegroundColor Yellow
 Get-DkimSigningConfig | select domain, Selector1CNAME, Selector2CNAME | fl | Out-File .\O365-DKIM-SigningKeys.txt
 
 #Open the log in Notepad, after running the tasks
 notepad .\O365-DKIM-SigningKeys.txt
 
+$CNAMECreated = Read-Host -Prompt 'Have you manually created (e.g. selector1._domainkey) the CNAME records? y / n'
+
+$EXOdomains | foreach {
+if ($CNAmeCreated -eq 'y' ) {
+  Write-Host "Enabling DKIM for domain: $_ " -ForegroundColor Yellow
+    Set-DkimSigningConfig -Identity $_ -Enabled $true
+    }   
+  }       
